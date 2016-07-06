@@ -1,0 +1,37 @@
+- hosts: osctrl
+  user: centos
+  sudo: yes
+  gather_facts: no
+  tasks:    
+    - name: Update nova.conf 
+      lineinfile: dest=/etc/nova/nova.conf regexp="^{{ item.key }}" line="{{ item.key }} = {{ item.value }}" state=present
+      with_items:
+       - { key: 'network_api_class', value: 'nova.network.neutronv2.api.API' }
+       - { key: 'security_group_api', value: 'neutron' }
+       - { key: 'firewall_driver', value: 'nova.virt.firewall.NoopFirewallDriver' }
+       - { key: 'ovs_bridge', value: 'alubr0' }
+       - { key: 'vif_driver', value: 'nova.virt.libvirt.vif.LibvirtGenericVIFDriver' }
+
+    - name: Update neutron.conf
+      lineinfile: dest=/etc/neutron/neutron.conf regexp="^{{ item.key }}" line="{{ item.key }} = {{ item.value }}" state=present
+      with_items:
+       - { key: 'allow_overlapping_ips', value: 'True' }
+       - { key: 'core_plugin', value: 'neutron.plugins.nuage.plugin.NuagePlugin' }
+       - { key: 'service_plugins', value: 'nuage_neutron.plugins.common.service_plugins.port_attributes.service_plugin.NuagePortAttributesServicePlugin' }
+    
+#    - name: Ensure plugins directory exists
+#      file: 
+ 
+    - name: Copy over nuage_plugin.ini file
+      template: src=templates/nuage_plugin.ini.jp2 dest=/etc/neutron/plugins/nuage_plugin.ini backup=yes
+
+    - name: Create symbolic link to nuage_plugin.ini
+      file: src=plugins/nuage_plugin.ini dest=/etc/neutron/plugin.ini state=link
+
+    - name: Migrate DB
+      shell: neutron-db-manage --config-file /etc/neutron/neutron.conf upgrade head 
+
+#     - name: Set Nuage-CMS ID for this OpenStack installation
+#       shell: python set_and_audit_cms.py --neutron-config-file /etc/neutron/neutron.conf --plugin-config-file /etc/neutron/plugin.ini
+
+ 

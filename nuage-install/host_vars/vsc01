@@ -1,0 +1,8 @@
+hypervisor: 10.10.10.210
+interfaces:
+  mgmt:
+    ip: 192.168.0.2
+    gw: 192.168.0.1
+  control:
+    ip: 192.168.10.2
+    gw: 192.168.10.1

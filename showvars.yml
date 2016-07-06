@@ -1,0 +1,9 @@
+- hosts: vsc:vschost
+  user: centos
+  sudo: yes
+  gather_facts: no
+  vars:
+    vsc_qcow2: /home/centos/nuage-files/vsc_singledisk.qcow2
+  tasks:
+   - name: Display all variables/facts known for a host
+     debug: var=hostvars[inventory_hostname] verbosity=4

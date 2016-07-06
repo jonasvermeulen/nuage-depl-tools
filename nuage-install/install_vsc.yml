@@ -1,0 +1,44 @@
+- hosts: vsc
+  user: centos
+  sudo: yes
+  gather_facts: no
+  vars:
+    vsc_qcow2: /home/centos/nuage-files/vsc_singledisk.qcow2
+  roles:
+    - nuage-vsc-installer
+  tasks:    
+    - name: Remove previous firewall rules for this VSC
+      shell: iptables-save | grep -v "{{ inventory_hostname }}" | iptables-restore
+      delegate_to: "{{ hypervisor }}" 
+
+    - name: Add Forwarding rules for outgoing trafic
+      shell: "iptables -I FORWARD 1 -i {{ item.br }} -s {{ item.host }} -j ACCEPT -m comment --comment 'Forwarding rule for {{ inventory_hostname }}' "
+      with_items:
+       - { host: "{{ interfaces.mgmt.ip }}", br: "{{ interfaces.mgmt.linux_bridge }}" }
+       - { host: "{{ interfaces.control.ip }}", br: "{{ interfaces.control.linux_bridge }}" }
+      delegate_to: "{{ hypervisor }}"
+ 
+    - name: Add Forwarding rules for outgoing trafic
+      shell: "iptables -I FORWARD 1 -o {{ item.br }} -d {{ item.host }} -m state --state RELATED,ESTABLISHED -j ACCEPT -m comment --comment 'Forwarding rule for {{ inventory_hostname }} '"
+      with_items:
+       - { host: "{{ interfaces.mgmt.ip }}", br: "{{ interfaces.mgmt.linux_bridge }}" }
+       - { host: "{{ interfaces.control.ip }}", br: "{{ interfaces.control.linux_bridge }}" }
+      delegate_to: "{{ hypervisor }}"
+
+    - name: Add Port-Forwarding Firewall rules for incoming traffic
+      shell: "iptables -t nat -I PREROUTING 1 -i eth0 -p tcp --dport {{ item.incport }} -j DNAT --to {{ item.host }}:{{ item.destport }} -m comment --comment 'Port-forwarding rule for {{ inventory_hostname }}' ; \
+              iptables -I FORWARD 1 -i eth0 -p tcp --dport {{ item.destport }} -d {{ item.host }} -j ACCEPT -m comment --comment 'Port-forwarding rule for {{ inventory_hostname }} '"
+      with_items:
+       - { host: "{{ interfaces.mgmt.ip }}", incport: 2200, destport: 22 }
+       - { host: "{{ interfaces.control.ip }}", incport: 179, destport: 179 }
+       - { host: "{{ interfaces.control.ip }}", incport: 6633, destport: 6633 }
+      delegate_to: "{{ hypervisor }}"
+    
+    - name: Add Masquerade rule for outgoing traffic
+      shell: "iptables -t nat -I POSTROUTING 1 -o eth0 -j MASQUERADE -m comment --comment 'Masquerade rule for  {{ inventory_hostname }} '"  
+      delegate_to: "{{ hypervisor }}" 
+
+
+    - name: Save Firewall rules
+      shell: "iptables-save > /etc/sysconfig/iptables"
+      delegate_to: "{{ hypervisor }}"

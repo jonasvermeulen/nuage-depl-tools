@@ -1,0 +1,26 @@
+# [DATABASE] 
+# Database connection if not specified in neutron.conf 
+# connection = mysql://nuage_neutron:$DB_PASS@$OPENSTACK_HOSTNAME/nuage_neutron?charset=utf8
+
+# [KEYSTONE] 
+# Keystone authentication if not specified in neutron.conf 
+# keystone_service_endpoint = http://$OPENSTACK_HOSTNAME:35357/v2.0/ 
+# keystone_admin_token = $ADMIN_TOKEN
+
+[RESTPROXY] 
+# Desired Name of VSD Organization/Enterprise to use when net-partition 
+# is not specified 
+default_net_partition_name = OpenStack_default 
+# Hostname or IP address and port for connection to VSD server 
+server = {{ hostvars[groups['vsd'][0]].dnshostname }}.{{ dns.domain }}:8443
+
+# VSD Username and password for OpenStack plugin connection
+# User must belong to CSP Root group and CSP CMS group 
+serverauth = {{ nuage.osuser }}:{{ nuage.ospass }}
+
+### Do not change the below options for standard installs 
+organization = csp 
+auth_resource = /me 
+serverssl = True 
+base_uri = /nuage/api/v4_0
+cms_id = {{ nuage.cmsid }}

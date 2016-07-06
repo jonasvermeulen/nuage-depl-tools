@@ -1,0 +1,16 @@
+domain_type: qemu
+memory: 2000000
+interfaces:
+  mgmt:
+    linux_bridge: br0
+    netmask_prefix: 24
+  control:
+    linux_bridge: br1
+    netmask_prefix: 24
+dns:
+  servers:
+    - 10.10.10.118
+  domain: ec2.internal
+ntp_servers:
+  - 10.10.10.118
+vsd_fqdn: vsd01.ec2.internal

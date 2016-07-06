@@ -1,0 +1,4 @@
+- include: "deploy_vschost.yml"
+- include: "install_vsc.yml"
+- include: "install_vsd.yml"
+- include: "install_vspk.yml"

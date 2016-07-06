@@ -1,0 +1,26 @@
+- hosts: vschost
+  user: centos
+  sudo: yes
+  gather_facts: yes
+  roles:
+    - role: bennojoy.network_interface
+      network_ether_interfaces:
+       - device: eth0
+         bootproto: dhcp
+         route:
+          - network: 0.0.0.0
+            netmask: 0.0.0.0
+            gateway: "{{ gatewayip }}" 
+      network_bridge_interfaces:
+       -  device: br0
+          type: bridge
+          bootproto: static
+          address: 192.168.0.1
+          netmask: 255.255.255.0
+          ports: []
+       -  device: br1
+          type: bridge   
+          bootproto: static
+          address: 192.168.10.1
+          netmask: 255.255.255.0
+          ports: []

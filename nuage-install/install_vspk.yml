@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+  vars:
+    vsd_lb_fqdn: "{{ groups['vsd'][0] }}"
+  tasks:
+  - name: Install packages to setup SDK and CLI
+    sudo: yes
+    pip: name=vspk
+
+# Alternative
+#    pip: name=git+https://github.com/nuagenetworks/vspk-python.git#egg=vspk
+
+  - name: copy vsdrc definition
+    template: src=templates/.vsdrc.j2 dest=~/.vsdrc backup=yes
+
+  - name: Load variables at shell startup
+    lineinfile: dest=~/.bashrc line="source ~/.vsdrc"
+
+  - name: Load environment variables now
+    shell: "source ~/.bashrc"
+
