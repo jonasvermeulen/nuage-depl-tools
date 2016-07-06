@@ -1,0 +1,18 @@
+$TTL 1D
+@       IN SOA {{ dns.domain }}. root.{{ dns.domain }}. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+        NS      {{ dns.domain }}.
+
+{{ dns.domain }}. IN A {{ ansible_default_ipv4.address }}
+{{ ansible_hostname }} IN A {{ ansible_default_ipv4.address }}
+
+
+{#
+{% for host in groups['app_servers'] %}
+   {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}
+{% endfor %}
+#}

@@ -1,0 +1,40 @@
+  - name: Install Packages
+    yum: name={{ item.pkgname }} state={{ item.state }}
+    with_items:
+     - { pkgname: "bind", state: "present"  }
+     - { pkgname: "bind-utils", state: "present"  }
+     - { pkgname: "python-dns", state: "present" }
+
+  - name: Generate DNSSEC keys
+    shell: dnssec-keygen -a HMAC-MD5 -b 512 -n USER -r /dev/urandom -K /var/named "{{ dns.domain }}" > /var/named/keyname creates=/var/named/keyname
+
+  - name: Read out key secret
+    shell: "grep ^Key: /var/named/`cat /var/named/keyname`.private | /usr/bin/awk '{ print $2; }'"
+    register: keysecret
+
+  - name: Update Bind conf file
+    template: src=named.conf.j2 dest=/etc/named.conf backup=yes
+    notify:
+     - restart named
+
+  - name: Copy Forward zone template file
+    template: src=db.clouddomain.fwd.j2 dest=/var/named/db.clouddomain.fwd backup=yes owner=named group=named
+    notify:
+     - restart named
+
+
+  - name: Copy Reverse zone template file
+    template: src=db.clouddomain.rr.j2 dest=/var/named/db.clouddomain.rr backup=yes owner=named group=named
+    notify:
+     - restart named
+
+  - name: ensure resolv.conf uses localhost for DNS
+    template: src=resolv.conf.j2 dest=/etc/resolv.conf backup=yes
+
+  - name: ensure dhclient does not override the resolv.conf
+    lineinfile: dest=/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }} regexp="^PEERDNS" line="PEERDNS=no" state=present
+
+  - name: Enable service
+    service: name=named enabled=yes
+
+  - meta: flush_handlers

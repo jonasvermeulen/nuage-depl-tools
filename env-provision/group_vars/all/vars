@@ -1,0 +1,21 @@
+
+# Amazon Ids
+vpc:
+  subnet: 10.10.0.0 
+  netmask_prefix: 16
+  gw: 10.10.0.1
+
+# DNS
+dns:
+  domain: ec2.internal
+  server: 10.10.10.118 
+  forwarders: 8.8.8.8
+
+gatewayip: 10.10.10.118
+
+vsd:
+  xmpp: vsd01
+
+nuage:
+  osuser: cmsadmin
+  ospass: cmspass

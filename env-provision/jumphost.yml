@@ -1,0 +1,11 @@
+
+---
+- hosts: jumphost
+  sudo: true
+  gather_facts: True
+  tasks:
+   - include_vars: group_vars/vpc.yml
+
+  roles:
+   - bind
+

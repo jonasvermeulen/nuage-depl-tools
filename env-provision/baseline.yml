@@ -1,0 +1,61 @@
+
+---
+- hosts: vsd:vschost:osctrl:oscomp
+  gather_facts: True 
+
+  tasks:
+
+    - name: Resize filesystem
+      shell: "resize2fs `df -T | awk '{ if ($NF == \"/\") print $1}'`"
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "6"
+
+    - name: Set default route
+      shell: "ip route replace 0.0.0.0/0 via {{ gatewayip }}"
+      become: true
+     
+    - name: Install packages
+      yum: name={{ item }} state=present
+      with_items:
+       - yum-utils
+       - ntp
+       - libselinux-python
+      become: true
+
+    - name: Set default route permanently"
+      lineinfile: dest=/etc/rc.d/rc.local regexp="^ip route replace default via" line="ip route change default via {{ gatewayip }}" state=present backup=yes
+      become: true
+
+    - name: Ensure NTP service is started and enabled at startup
+      service: name=ntpd state=restarted enabled=yes
+      become: true
+
+    - name: Set hostname
+      hostname: name="{{ dnshostname }}.{{ dns.domain }}" 
+      become: true
+
+    - name: ensure resolv.conf uses localhost for DNS
+      template: src=templates/resolv.conf.j2 dest=/etc/resolv.conf backup=yes
+      become: true
+
+    - name: ensure dhclient does not override the resolv.conf
+      lineinfile: dest=/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }} regexp="^PEERDNS" line="PEERDNS=no" state=present backup=yes
+      become: true
+ 
+    - name: Copy NS command template to add A and PTR record
+      template: src=templates/nsaddarecord.txt dest="/tmp/nsaddarecord-{{ dnshostname }}.txt"
+      delegate_to: "{{ dns.server }}"
+
+    - name: Register DNS name
+      shell: sudo nsupdate -k "/var/named/{{ dns.keyname }}" -v "/tmp/nsaddarecord-{{ dnshostname }}.txt"
+      delegate_to: "{{ dns.server }}"
+
+    - name: Install iptables-services on RH/Centos 7.X+
+      yum: name=iptables-services state=present
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "7"
+      become: true
+ 
+    - name: Ensure iptables-service is enabled so it reloads iptables entry upon reboot
+      service: name=iptables state=started enabled=yes
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "7"
+      become: true
+

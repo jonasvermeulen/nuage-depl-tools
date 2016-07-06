@@ -1,0 +1,21 @@
+ec2_vpc:
+    cidr_block: 10.0.0.0/16
+    resource_tags: { "Environment":"VPC1" }
+    subnets:
+      - cidr: 10.10.10.0/24
+        resource_tags: { "Environment":"VPC1", "Tier" : "public" }
+      - cidr: 10.10.20.0/24
+        resource_tags: { "Environment":"VPC1", "Tier" : "mgmt" }
+      - cidr: 10.10.30.0/24
+        resource_tags: { "Environment":"VPC1", "Tier" : "data" }
+    internet_gateway: True
+    route_tables:
+      - subnets:
+          - 10.10.10.0/24
+          - 10.10.20.0/24
+          - 10.10.30.0/24
+        routes:
+          - dest: 0.0.0.0/0
+            gw: igw
+    register: vpc
+
