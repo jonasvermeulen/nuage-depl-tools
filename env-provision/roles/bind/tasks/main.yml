@@ -13,18 +13,18 @@
     register: keysecret
 
   - name: Update Bind conf file
-    template: src=named.conf.j2 dest=/etc/named.conf backup=yes
+    template: src=named.conf.j2 dest=/etc/named.conf backup=yes seuser=system_u serole=object_r setype=named_conf
     notify:
      - restart named
 
   - name: Copy Forward zone template file
-    template: src=db.clouddomain.fwd.j2 dest=/var/named/db.clouddomain.fwd backup=yes owner=named group=named
+    template: src=db.clouddomain.fwd.j2 dest=/var/named/db.clouddomain.fwd backup=yes owner=named group=named seuser=system_u serole=object_r setype=named_zone
     notify:
      - restart named
 
 
   - name: Copy Reverse zone template file
-    template: src=db.clouddomain.rr.j2 dest=/var/named/db.clouddomain.rr backup=yes owner=named group=named
+    template: src=db.clouddomain.rr.j2 dest=/var/named/db.clouddomain.rr backup=yes owner=named group=named seuser=system_u serole=object_r setype=named_zone
     notify:
      - restart named
 
@@ -33,6 +33,9 @@
 
   - name: ensure dhclient does not override the resolv.conf
     lineinfile: dest=/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }} regexp="^PEERDNS" line="PEERDNS=no" state=present
+
+  - name: ensure selinux is configured for dynamic DNS updates
+    seboolean: name=named_write_master_zones state=yes persistent=yes
 
   - name: Enable service
     service: name=named enabled=yes

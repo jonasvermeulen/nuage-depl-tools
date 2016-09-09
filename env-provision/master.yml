@@ -1,0 +1,27 @@
+
+---
+- hosts: master
+  connection: local
+  sudo: true
+  gather_facts: True
+  tasks:
+   - include_vars: group_vars/vpc.yml
+
+  roles:
+   - bind
+
+
+  tasks:
+    - name: Copy over SSH config file
+      template: src=templates/ssh_config.j2 dest=~/.ssh/config mode=0600 serole=object_r setype=ssh_home_t 
+
+#   - name: add record
+#     shell: nsupdate -k /var/named/`cat /var/named/keyfile/` 
+#     
+#      nsupdate:
+#         server=jumphost
+#         key_name={{ dns.domain }}
+#         key_secret={{ keysecret.stdout }}
+#         zone={{ dns.domain }}
+#         record=vsd
+#         value=10.10.10.185

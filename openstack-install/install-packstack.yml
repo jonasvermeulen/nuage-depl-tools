@@ -1,0 +1,50 @@
+---
+- hosts: oscomp
+  tasks:
+   - name: Prepare Compute Hosts | Allow root login (required for AWS)
+     shell: sudo cp ~/.ssh/authorized_keys /root/.ssh/authorized_keys
+   - name: Prepare Compute Hosts | Install OpenStack repo
+     yum: name=centos-release-openstack-liberty
+     become: true
+
+- hosts: osctrl
+  gather_facts: true
+  vars:
+    openstack:
+      password: Alcateldc
+
+  tasks:
+   - name: Install packages
+     yum: name={{ item }}
+     with_items:
+      - centos-release-openstack-liberty
+      - openstack-packstack
+      - python-openstackclient
+      - python-neutronclient
+      - python-glanceclient
+     become: yes
+
+   - name: Generate packstack kanswer file
+     shell: "packstack --gen-answer-file=~/answerfile"
+
+   - name: Allow root login (required for AWS)
+     shell: sudo cp ~/.ssh/authorized_keys /root/.ssh/authorized_keys
+
+   - name: Copy over packstack answerfile
+     template: src=templates/answerfile-liberty.j2 dest=~/answerfile backup=yes
+
+   - name: Ensure public key is in place to reassure packstack
+     shell: "cp ~/.ssh/authorized_keys ~/.ssh/id_rsa.pub"
+   
+   - name: Run packstack installer
+     shell: packstack  --gen-answer-file=answerfile &
+     async: 1
+     poll: 0
+
+    - name: Access Horizon Dashboard from everywhere
+      lineinfile: dest=/etc/httpd/conf.d/15-horizon_vhost.conf regexp="^  ServerAlias " line="   ServerAlias *" backup=yes
+      become: yes
+
+    - name: Restart Apache
+      service: name=httpd state=restarted
+

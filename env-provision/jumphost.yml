@@ -9,3 +9,7 @@
   roles:
    - bind
 
+  tasks:
+   - name: Copy over SSH config file
+     template: src=templates/ssh_config.j2 dest=~/.ssh/config mode=0600 serole=object_r setype=ssh_home_t
+

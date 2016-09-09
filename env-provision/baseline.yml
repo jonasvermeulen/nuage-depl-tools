@@ -1,6 +1,6 @@
 
 ---
-- hosts: vsd:vschost:osctrl:oscomp
+- hosts: all 
   gather_facts: True 
 
   tasks:
@@ -22,7 +22,7 @@
       become: true
 
     - name: Set default route permanently"
-      lineinfile: dest=/etc/rc.d/rc.local regexp="^ip route replace default via" line="ip route change default via {{ gatewayip }}" state=present backup=yes
+      lineinfile: dest=/etc/rc.d/rc.local regexp="^ip route replace default via" line="ip route replace default via {{ gatewayip }}" state=present backup=yes
       become: true
 
     - name: Ensure NTP service is started and enabled at startup
@@ -33,7 +33,12 @@
       hostname: name="{{ dnshostname }}.{{ dns.domain }}" 
       become: true
 
-    - name: ensure resolv.conf uses localhost for DNS
+    - name: Copy over hostname cloudinit file
+      template: src=templates/99_hostname.cfg.j2 dest=/etc/cloud/cloud.cfg.d/99_hostname.cfg mode=0644 owner=root selevel=s0 seuser=system_u serole=object_r setype=etc_t
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "7"
+      become: true
+ 
+    - name: ensure resolv.conf uses the configured DNS server
       template: src=templates/resolv.conf.j2 dest=/etc/resolv.conf backup=yes
       become: true
 
@@ -58,4 +63,5 @@
       service: name=iptables state=started enabled=yes
       when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "7"
       become: true
+
 

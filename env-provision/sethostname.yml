@@ -1,0 +1,13 @@
+---
+- hosts: 127.0.0.1
+  vars:
+   dnshostname: jumphost
+   dns:
+     domain: ec2.internal
+
+  tasks:
+    - name: Copy over hostname cloudinit file
+      template: src=templates/99_hostname.cfg.j2 dest=/etc/cloud/cloud.cfg.d/99_hostname.cfg mode=0644 owner=root selevel=s0 seuser=system_u serole=object_r setype=etc_t
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "7"
+      become: true
+

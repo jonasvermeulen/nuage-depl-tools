@@ -8,13 +8,18 @@
 
   tasks:
 
-    - name: Add Port-Forwarding Firewall rules
-      shell: "iptables -t nat -A PREROUTING -i eth0 -p tcp --dport {{ item.incport }} -j DNAT --to {{ item.host }}:{{ item.destport }} ; \
-              iptables -A FORWARD -i eth0 -p tcp --dport {{ item.destport }} -d {{ item.host }} -j ACCEPT"
-      with_items:
-        - { host: "{{ inventory_hostname }}", incport: 8443, destport: 8443 }
+    - name: Remove previous firewall rules for this VSD
+      shell: iptables-save | grep -v "{{ inventory_hostname }}" | iptables-restore
       delegate_to: "{{ gatewayip }}"
-     
+
+    - name: Add Forwarding rules for outgoing trafic
+      shell: "iptables -I FORWARD 1 -i eth0 -p tcp --dport {{ item.destport }} -d {{ item.host }} -j ACCEPT -m comment --comment 'Forwarding rule for {{ inventory_hostname }}' ; \
+             iptables -t nat -I PREROUTING 1 -i eth0 -p tcp --dport {{ item.incport }} -j DNAT --to {{ item.host }}:{{ item.destport }} -m comment --comment 'Port-Forwarding rule for {{ inventory_hostname }}'"
+      with_items:
+       - { host: "{{ inventory_hostname }}", incport: 8443, destport: 8443 }
+      delegate_to: "{{ gatewayip }}"
+
     - name: Save Firewall rules
       shell: "iptables-save > /etc/sysconfig/iptables"
       delegate_to: "{{ gatewayip }}"
+

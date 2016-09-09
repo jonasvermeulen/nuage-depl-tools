@@ -1,0 +1,4 @@
+#cloud-config
+hostname: {{ item.name }}
+fqdn: {{ item.name }}.{{ dns.domain }}
+manage_etc_hosts: true
