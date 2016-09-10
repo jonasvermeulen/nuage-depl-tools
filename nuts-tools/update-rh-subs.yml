@@ -1,0 +1,22 @@
+- hosts: osctrl,oscompute,vrsg
+  gather_facts: no
+  vars_files:
+    # This file defines the variables rh_username, rh_password, rh_pool.
+    # It should be vaulted
+    - rh-subs-vars.yml
+
+  tasks:
+  - block:
+    - name: Update Subscription Manager with updated registration credentials
+      redhat_subscription: state=present username="{{ rh_username }}" password="{{ rh_password }}" pool="{{ rh_pool }}" 
+
+# From Ansible 2.2+ onwards, add force=yes to the above.
+# Now, we have to manually clean it, and try again.
+    rescue:
+    - name: Remove current registration
+      redhat_subscription: state=absent
+    - name: Clean up local subscription data
+      shell: "subscription-manager clean"
+    - name: Update Subscription Manager with updated registration credentials
+      redhat_subscription: state=present username="{{ rh_username }}" password="{{ rh_password }}" pool="{{ rh_pool }}"
+

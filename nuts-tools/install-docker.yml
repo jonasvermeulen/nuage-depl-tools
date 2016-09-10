@@ -1,0 +1,32 @@
+---
+- hosts: oscompute
+  gather_facts: false 
+  vars_files:
+  - user-vars.yml
+ 
+  tasks:
+  - name: Install docker
+    yum: name={{ item }} enablerepo="rhel-7-server-extras-rpms"
+    with_items:
+     - docker
+     - python-docker-py
+
+  - name: Create temporary directory
+    file: path=/tmp/nuage-docker-mon state=directory mode=0755
+
+  - name: Copy and extract Nuage Docker Monitor RPM file
+    unarchive: src="{{ nuage_archive }}/{{ nuage_docker_archive }}" dest=/tmp/nuage-docker-mon/ 
+
+  - name: Install Nuage Docker Monitor
+    yum: name="/tmp/nuage-docker-mon/{{ nuage_docker_monitor_rpm }}"
+    notify: 
+     - Restart Nuage Openvswitch
+
+  - name: Clean up temporary directory
+    file: path=/tmp/nuage-docker-mon state=directory mode=0755 state=absent
+
+  handlers:
+  - name: Restart Nuage Openvswitch
+    service: name=openvswitch state=restarted
+
+

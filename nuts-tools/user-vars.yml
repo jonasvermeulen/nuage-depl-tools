@@ -1,0 +1,6 @@
+nuage_archive: "~/nuage-files/"
+nuage_docker_archive: "Nuage-Docker-Monitor-4.0.3-25.tar.gz"
+nuage_docker_monitor_rpm: "el7/nuage-docker-monitor-4.0.3-25.el7.x86_64.rpm"
+nuageamp_git_repo: https://github.com/nuagecommunity/nuage-amp.git
+os_public_key_file: "files/os_public_key"
+nagios_password: Alcateldc

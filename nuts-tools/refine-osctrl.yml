@@ -1,0 +1,43 @@
+---
+- hosts: osctrl
+  gather_facts: no
+  vars_files:
+  - user-vars.yml
+
+  tasks:
+  - name: Install necessary packages
+    yum: name=python-passlib
+
+  - name: Install shade library
+    pip: name=shade
+
+  - name: Provision personal keypair so that new images can be used with passwordless login
+    os_keypair: 
+      name: "default-key"
+      public_key: "{{ lookup('file', os_public_key_file) }}"
+      auth:
+        auth_url: "http://{{ inventory_hostname }}:5000/v2.0/"
+        username: "{{ os_admin_username }}"
+        password: "{{ os_admin_password }}"
+        project_name: "{{ os_admin_tenant }}"
+
+  - name: Remove NUTS default key
+    os_keypair: 
+      name: "default-nuts-key"
+      state: absent
+      auth:
+        auth_url: "http://{{ inventory_hostname }}:5000/v2.0/"
+        username: "{{ os_admin_username }}"
+        password: "{{ os_admin_password }}"
+        project_name: "{{ os_admin_tenant }}"
+
+  - name: Update Nagios admin username/password
+    htpasswd: path=/etc/nagios/passwd name=nagiosadmin password="{{ nagios_password }}" 
+
+  - name: Update Nagios keystone credentials
+    copy: remote_src=True src=/root/keystonerc_admin dest=/etc/nagios/keystonerc_admin backup=yes
+
+  - name: Correct Nagios glance service check
+    lineinfile: dest=/usr/lib64/nagios/plugins/glance-index  regexp="^data=" line="data=$(glance image-list 2>&1)"
+
+ 

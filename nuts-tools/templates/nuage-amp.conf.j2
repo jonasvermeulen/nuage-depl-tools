@@ -1,0 +1,39 @@
+#Config file for Nuage AMP
+
+[DEFAULT]
+hostname = {{ inventory_hostname }}
+
+[logging]
+loglevel = INFO
+rotate_logfiles = True
+maxsize = 100
+backups = 5
+
+[vsd]
+hostname = {{ groups['vsd'][0] }}
+port = 8443
+username = csproot
+password = csproot
+enterprise = csp
+version = v4_0
+
+[openstack]
+admin_username = {{ os_admin_username }}
+admin_password = {{ os_admin_password }}
+admin_tenant = {{ os_admin_tenant }}
+default_net_partition = {{ os_default_net_partition }}
+auth_url = http://{{ inventory_hostname }}:5000/v2.0/
+version = liberty
+
+[neutron]
+hostname = {{ inventory_hostname }}
+db_hostname = {{ inventory_hostname }}
+db_username = neutron
+db_password = {{ os_neutron_db_password }}
+db_name = neutron
+
+[sync]
+l2_name_format = $d
+l3_name_format = $d ($z) \ $s
+excluded_tenants= {{ os_default_net_partition }} 
+

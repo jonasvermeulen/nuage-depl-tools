@@ -1,0 +1,27 @@
+---
+- hosts: osctrl
+  gather_facts: false 
+  vars_files:
+  - user-vars.yml
+  
+  tasks:
+  - name: Clone nuage-amp from github
+    git: repo="{{ nuageamp_git_repo }}" dest=~/nuage-amp/
+
+  - name: Install nuage-AMP
+    shell: "cd ~/nuage-amp; python setup.py install"
+ 
+  - name: Configure Nuage-AMP config file
+    template: src=templates/nuage-amp.conf.j2 dest=/etc/nuage-amp/nuage-amp.conf backup=yes
+    notify:
+    - restart nuage-amp-sync
+
+  - name: Start Nuage-AMP service
+    service: name=nuage-amp-sync state=started enabled=yes
+
+  handlers:
+  - name: restart nuage-amp-sync
+    service: name=nuage-amp-sync state=restarted enabled=yes
+
+
+
