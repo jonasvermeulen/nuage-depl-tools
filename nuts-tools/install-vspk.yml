@@ -1,0 +1,14 @@
+---
+- hosts: osctrl
+  gather_facts: no
+
+  tasks:
+  - name: Install PyPi
+    yum: name=python-pip
+
+  - name: Install vspk from pip
+    pip: name=vspk
+
+  - name: Copy over vspkrc file
+    template: src=templates/vspkrc.j2 dest=~/vspkrc backup=yes
+
