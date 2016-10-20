@@ -5,6 +5,9 @@
   - user-vars.yml
   
   tasks:
+  - name: Install docopt
+    yum: name=python-docopt
+
   - name: Clone nuage-amp from github
     git: repo="{{ nuageamp_git_repo }}" dest=~/nuage-amp/
 
