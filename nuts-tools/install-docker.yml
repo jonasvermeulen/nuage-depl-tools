@@ -6,7 +6,7 @@
  
   tasks:
   - name: Install docker
-    yum: name={{ item }} enablerepo="rhel-7-server-extras-rpms"
+    yum: name={{ item }}
     with_items:
      - docker
      - python-docker-py
