@@ -1,0 +1,30 @@
+target_server: server-512
+target_server_username: root
+  
+
+centos_image_url: "https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
+centos_image_filename: "CentOS-7-x86_64-GenericCloud.qcow2"
+
+libvirt:
+  emulator: "/usr/libexec/qemu-kvm"
+  user: "qemu"
+  group: "qemu"
+
+images_path: '/var/lib/libvirt/images'
+
+vmname: "{{ inventory_hostname }}"
+vm_cpu: 6
+vm_ram: 12582912
+
+vm_bridge0: br0
+
+vm_hostname: "{{ vmname }}"
+
+dns:
+  domain: "pod51.eu.nuagedemo.net"
+
+tempdir:
+  path: "/tmp/osc2"
+
+public_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJGUr3XNol/w49muQbtpc3lqbF+GElXPomdRBFIavNyPoXedCUaD9UQsGI7KX7ZsyEJ3y4PJKXMwn1b6nKjyY7oLb8dMqhRlZcgOg/lnCotTv+2kQeHK9LAf05V1U/u7JWlLi3Ni+gcZYRrjgPtwpi5WqKrxwL1KFAvDvGM3hWaRnDyHJDZC1ZLxCPWB9ljyxFc5a/5rKbzYtaD4qmvKoEF0V2riozznWGHczoI/jR2dZbnm/klRGXB+BB1GYuGUzu08jKD7tuBRpqlmlnqCaqVdGbKXxhQzPyWTFn2EuGbS9JG1GCYg74li+ksDz+ka9BBObEdiSbhNbrXlJG3Bg7 root@master
+

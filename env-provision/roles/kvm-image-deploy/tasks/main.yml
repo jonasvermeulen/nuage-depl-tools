@@ -1,0 +1,112 @@
+---
+- name: Pull facts of hypervisor
+  action: setup
+
+- name: If RedHat, install packages for RedHat OS family distros
+  yum: name={{ item }} state=present
+  with_items:
+   - qemu-kvm
+   - libvirt
+   - bridge-utils
+   - libvirt-python
+   - genisoimage
+  when: ansible_os_family == "RedHat"
+
+- name: If Debian, install packages for Debian OS family distros
+  apt: name={{ item }} state=present
+  with_items:
+   - qemu-kvm
+   - libvirt-bin
+   - bridge-utils
+   - python-libvirt
+   - genisoimage
+  when: ansible_os_family == "Debian"
+
+- name: List the Virtual Machines running
+  virt: command=list_vms
+  register: virt_vms
+
+- name: Verify that the VM is not already running
+  assert:
+    that: "inventory_hostname not in virt_vms.list_vms"
+    msg: "{{ inventory_hostname }} is already running on {{ target_server }}"
+
+ 
+#  - name: Generate temp directory
+#    tempfile:
+#      state: directory
+#      suffix: "{{ vmname }}"
+#    register: tempdir
+
+ 
+#  - name: Download Centos Generic Cloud Image
+#    get_url:
+#      url: "{{ centos_image_url }}"
+#      dest: "{{tempdir.path}}/{{ centos_image_filename }}"
+
+
+- name: Generate cloud-init files
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{tempdir.path}}/{{ item }}"
+  with_items:
+    - meta-data
+    - user-data
+    - vm_xml
+
+- name: Create VM directory
+  file:
+    path:  '{{ images_path }}/{{ vmname }}'
+    state: directory
+    owner: '{{ libvirt.user }}'
+    group: '{{ libvirt.group }}'
+
+- name: Generate Cloud-Init ISO image
+  shell: "genisoimage -output {{ images_path }}/{{ vmname }}/cloud-init.iso -volid cidata -joliet -r {{ tempdir.path }}/meta-data {{ tempdir.path }}/user-data"
+
+- name: Change owner/group of generated ISO image
+  file:
+    path: "{{ images_path }}/{{ vmname }}/cloud-init.iso"
+    owner: '{{ libvirt.user }}'
+    group: '{{ libvirt.group }}'
+
+
+- name: Copy qcow2 image to libvirt image Directory
+  copy:
+    src:   '{{ tempdir.path }}/{{ centos_image_filename }}'
+    dest:  '{{ images_path }}/{{ vmname }}/{{ vmname }}.qcow2'
+    owner: '{{ libvirt.user }}'
+    group: '{{ libvirt.group }}'
+    remote_src: true
+
+- name: Define guest VM
+  virt:
+    name: '{{ vmname }}'
+    command: define
+    xml: '{{ lookup("template", "vm_xml.j2") }}'
+    uri: "qemu:///system"
+
+- name: Autostart
+  virt: 
+    name: "{{ vmname }}"
+    command: "status"
+    autostart: True
+    uri: "qemu:///system"
+
+- name: Start VM
+  virt:
+    name: '{{ vmname }}'
+    state: running
+    uri: qemu:///system
+
+- name: Pause for 20s to have VM reach its DHCP stage
+  pause: seconds=20
+
+- name: Print out IP address as assigned by DHCP
+  shell: "virt-cat {{ vmname }} /var/log/messages | grep 'dhclient.*bound to' | awk '{ print $8;}'"
+  ignore_errors: yes
+  changed_when: False
+  register: ipaddr
+
+- debug: msg="{{ ipaddr.stdout }}"
+  

@@ -1,0 +1,44 @@
+
+#cloud-config
+# Hostname management
+preserve_hostname: False
+hostname: {{ vm_hostname }}
+fqdn: {{ vm_hostname }}.{{ dns.domain }}
+
+
+# users
+users:
+  - default
+  - name: root
+    lock-passwd: false
+    ssh_authorized_keys:
+      - {{ public_key }}
+
+# Set password and authentication settings for `centos` user
+password: centos
+ssh_authorized_keys:
+  - {{ public_key }}
+
+# Allow password-based logins, and open up root user (UNSECURE)
+disable_root: 0
+ssh_pwauth:   1
+chpasswd:
+  list: |
+    root:Alcateldc
+    centos:centos
+  expire: False
+
+
+# Remove cloud-init when finished with it
+runcmd:
+  - [ yum, -y, remove, cloud-init ]
+
+# Configure where output will go
+output: 
+  all: ">> /var/log/cloud-init.log"
+
+
+# configure interaction with ssh server
+ssh_svcname: ssh
+ssh_genkeytypes: ['rsa', 'ecdsa']
+

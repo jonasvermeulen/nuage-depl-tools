@@ -1,0 +1,7 @@
+*.log
+*.swp
+*.retry
+*.bak
+*.pyc
+hosts
+

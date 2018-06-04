@@ -1,0 +1,9 @@
+---
+- hosts: kvm-guest
+  gather_facts: False
+  tasks:
+  - name: Deploy image on {{ target_server }}
+    import_role:  name=kvm-image-deploy
+    delegate_to: "{{ target_server }}"
+    remote_user: "{{ target_server_username }}"
+
