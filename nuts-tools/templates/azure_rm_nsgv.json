@@ -127,10 +127,50 @@
       }
     },
     {
+      "name": "[variables('Subnet2Name')]",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2017-10-01",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
+      ],
+      "properties": {
+        "addressPrefix": "[variables('Subnet2Prefix')]",
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('defaultNsgName'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "Nic1",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/subnets/', variables('Subnet2Name'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnet2Ref')]"
+              }
+            }
+          }
+        ],
+        "enableIPForwarding": true
+      }
+    },
+    {
       "type": "Microsoft.Network/routeTables",
       "name": "[variables('routeTableName')]",
       "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', 'Nic1')]"
+      ],
       "properties": {
         "routes": [
           {
@@ -138,7 +178,7 @@
             "properties": {
               "addressPrefix": "[variables('RemotePrefix')]",
               "nextHopType": "VirtualAppliance",
-              "nextHopIpAddress": "[variables('NuageNSGLanPrivateIPAddress')]"
+              "nextHopIpAddress": "[reference('Nic1').ipConfigurations[0].properties.privateIPAddress]"
             }
           }
         ]
@@ -171,13 +211,7 @@
             }
           },
           {
-            "name": "[variables('Subnet2Name')]",
-            "properties": {
-              "addressPrefix": "[variables('Subnet2Prefix')]",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('defaultNsgName'))]"
-              }
-            }
+                "id": "[variables('subnet2Ref')]"
           },
           {
             "name": "[variables('Subnet3Name')]",
@@ -220,29 +254,7 @@
         ]
       }
     },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "Nic1",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[variables('subnet2Ref')]"
-              }
-            }
-          }
-        ],
-        "enableIPForwarding": true
-      }
-    },
+    
     {
       "apiVersion": "2018-06-01",
       "type": "Microsoft.Compute/virtualMachines",
