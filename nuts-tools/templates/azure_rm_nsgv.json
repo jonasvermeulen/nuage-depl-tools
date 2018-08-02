@@ -127,8 +127,8 @@
       }
     },
     {
-      "name": "[variables('Subnet2Name')]",
       "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('VNetName'), '/',variables('Subnet2Name')]",
       "apiVersion": "2017-10-01",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
